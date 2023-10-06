@@ -8,22 +8,22 @@ class Student(models.Model):
     password = models.CharField(max_length=128)
     fio = models.CharField(max_length=100, verbose_name="ФИО")
     birthdate = models.DateField(verbose_name="Дата рождения")
-    phone_number = models.CharField(max_length=15 , verbose_name="Номер телефона")
-    address = models.CharField(max_length=200 , verbose_name="Адрес")
+    phone_number = models.CharField(max_length=15, verbose_name="Номер телефона")
+    address = models.CharField(max_length=200, verbose_name="Адрес")
     email = models.EmailField()
     admission_year = models.PositiveIntegerField(verbose_name="Год поступления")
-    student_id = models.CharField(max_length=20,verbose_name="Номер ст билета")
-    photo = models.ImageField(upload_to='student_photos/', null=True, blank=True,verbose_name="Фото")
+    student_id = models.CharField(max_length=20, verbose_name="Номер ст билета")
+    photo = models.ImageField(upload_to='student_photos/', null=True, blank=True, verbose_name="Фото")
     credits = models.PositiveIntegerField(verbose_name="Количество кредитов")
     STUDENT_TYPES = (
         ('budget', 'Бюджет'),
         ('contract', 'Контракт'),
     )
-    student_type = models.CharField(max_length=10, choices=STUDENT_TYPES , verbose_name="Статус студента")
+    student_type = models.CharField(max_length=10, choices=STUDENT_TYPES, verbose_name="Статус студента")
     account = models.OneToOneField('Account', on_delete=models.CASCADE, verbose_name="Счет",
                                    related_name='student_account')
-    transcript = models.OneToOneField('Transcript', on_delete=models.SET_NULL, null=True, blank=True,verbose_name="Ведомость",related_name='transcripts_for_students')
-    group = models.ForeignKey('Group', on_delete=models.CASCADE,verbose_name="Группа")
+    transcript = models.OneToOneField('Transcript', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Ведомость", related_name='transcripts_for_students')
+    group = models.ForeignKey('Group', on_delete=models.CASCADE, verbose_name="Группа")
 
     def __str__(self):
         return self.fio
@@ -66,7 +66,10 @@ class Transcript(models.Model):
     attendance = models.ManyToManyField('Attendance', verbose_name="Времена посещения")
 
     def __str__(self):
-        return f"{self.student} - {self.subject}"
+        if self.student:
+            return f"{self.student.fio} - {self.subject}"
+        else:
+            return f"Transcript {self.id} - {self.subject}"
 
 
 class Attendance(models.Model):
@@ -83,11 +86,11 @@ class Attendance(models.Model):
     def __str__(self):
         return f"{self.student} - {self.schedule} - {self.status}"
 class Subject(models.Model):
-    name = models.CharField(max_length=100,verbose_name="Название")
-    subject_code = models.CharField(max_length=20,verbose_name="Номер предмета")
+    name = models.CharField(max_length=100, verbose_name="Название")
+    subject_code = models.CharField(max_length=20, verbose_name="Номер предмета")
     description = models.TextField(verbose_name="Описание")
     credits = models.PositiveIntegerField(verbose_name="Количество кредитов")
-    teacher = models.ForeignKey('Teacher', on_delete=models.CASCADE,verbose_name='Преподаватель')
+    teacher = models.ForeignKey('Teacher', on_delete=models.CASCADE, verbose_name='Преподаватель')
 
     def __str__(self):
         return self.name
@@ -116,9 +119,9 @@ class Department(models.Model):
         return self.name
 
 class Group(models.Model):
-    name = models.CharField(max_length=100,verbose_name="Название")
+    name = models.CharField(max_length=100, verbose_name="Название")
     year_created = models.PositiveIntegerField(verbose_name='Дата создания')
-    subjects = models.ManyToManyField('Subject', related_name='groups',verbose_name='Предметы')
+    subjects = models.ManyToManyField('Subject', related_name='groups', verbose_name='Предметы')
 
     def __str__(self):
         return self.name
@@ -134,28 +137,28 @@ class Schedule(models.Model):
         ('saturday', 'Суббота'),
         ('sunday', 'Воскресенье'),
     )
-    weekday = models.CharField(max_length=10, choices=WEEKDAYS , verbose_name="День недели")
+    weekday = models.CharField(max_length=10, choices=WEEKDAYS, verbose_name="День недели")
     time = models.TimeField(verbose_name="Время")
-    subject = models.ForeignKey('Subject', on_delete=models.CASCADE,verbose_name="Предмет")
+    subject = models.ForeignKey('Subject', on_delete=models.CASCADE, verbose_name="Предмет")
     LESSON_TYPES = (
         ('lecture', 'Лекция'),
         ('practice', 'Практика'),
     )
-    lesson_type = models.CharField(max_length=10, choices=LESSON_TYPES,verbose_name='Тип занятий')
-    teacher = models.ForeignKey('Teacher', on_delete=models.CASCADE,verbose_name="Преподаватель")
-    group = models.ForeignKey('Group', on_delete=models.CASCADE,verbose_name="Группа")
-    classroom = models.CharField(max_length=20,verbose_name="Аудитория")
+    lesson_type = models.CharField(max_length=10, choices=LESSON_TYPES, verbose_name='Тип занятий')
+    teacher = models.ForeignKey('Teacher', on_delete=models.CASCADE, verbose_name="Преподаватель")
+    group = models.ForeignKey('Group', on_delete=models.CASCADE, verbose_name="Группа")
+    classroom = models.CharField(max_length=20, verbose_name="Аудитория")
 
     def __str__(self):
         return f"{self.get_weekday_display()}, {self.time} - {self.subject} - {self.classroom}"
 
 
 class Grade(models.Model):
-    student = models.ForeignKey('Student', on_delete=models.CASCADE,verbose_name="Студент")
-    subject = models.ForeignKey('Subject', on_delete=models.CASCADE,verbose_name="Предмет")
-    grade = models.DecimalField(max_digits=20, decimal_places=1,verbose_name="Оценка")
+    student = models.ForeignKey('Student', on_delete=models.CASCADE, verbose_name="Студент")
+    subject = models.ForeignKey('Subject', on_delete=models.CASCADE, verbose_name="Предмет")
+    grade = models.DecimalField(max_digits=20, decimal_places=1, verbose_name="Оценка")
     date = models.DateField(verbose_name="Дата")
-    teacher = models.ForeignKey('Teacher', on_delete=models.CASCADE,verbose_name="Преподаватель")
+    teacher = models.ForeignKey('Teacher', on_delete=models.CASCADE, verbose_name="Преподаватель")
 
     def __str__(self):
         return f"{self.student} - {self.subject} - {self.grade}"
@@ -210,8 +213,3 @@ class Session(models.Model):
 
     def __str__(self):
         return self.name
-
-
-
-
-
