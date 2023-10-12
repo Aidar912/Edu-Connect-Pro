@@ -21,7 +21,7 @@ class Student(models.Model):
     )
     student_type = models.CharField(max_length=10, choices=STUDENT_TYPES, verbose_name="Статус студента")
     account = models.OneToOneField('Account', on_delete=models.CASCADE, verbose_name="Счет",
-                                   related_name='student_account')
+                                   related_name='student_account', null=True)
     transcript = models.OneToOneField('Transcript', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Ведомость", related_name='transcripts_for_students')
     group = models.ForeignKey('Group', on_delete=models.CASCADE, verbose_name="Группа")
 
@@ -34,15 +34,19 @@ class Account(models.Model):
     date = models.DateField(verbose_name="Дата")
     contract_term = models.DateField(verbose_name="Срок контракта")
     payment_status = models.CharField(max_length=20, verbose_name="Статус оплаты")
-    payment_history = models.ForeignKey("PaymentHistory", on_delete=models.CASCADE, verbose_name="История оплаты")
+    payment_history = models.ForeignKey("PaymentHistory", on_delete=models.CASCADE, verbose_name="История оплаты",
+                                        null=True)
 
     def __str__(self):
         return self.contract_number
 
     def get_total_payment_amount(self):
-        total_payment_amount = PaymentHistory.objects.filter(account=self).aggregate(models.Sum('amount_paid'))['amount_paid__sum']
-        return total_payment_amount or 0
-
+        if self.payment_history:
+            total_payment_amount = PaymentHistory.objects.filter(account=self).aggregate(models.Sum('amount_paid'))[
+                'amount_paid__sum']
+            return total_payment_amount or 0
+        else:
+            return 0
 
 
 class PaymentHistory(models.Model):
@@ -102,8 +106,7 @@ class Teacher(models.Model):
     birthdate = models.DateField(verbose_name="Дата рождения")
     phone_number = models.CharField(max_length=15, verbose_name="Телефон")
     email = models.EmailField(verbose_name="Email")
-    subjects = models.ManyToManyField('Subject', related_name='teachers', verbose_name="Список предметов")
-    department = models.ForeignKey("Department", on_delete=models.CASCADE, verbose_name="Кафедра")
+    subjects = models.ManyToManyField('Subject', related_name='teachers', verbose_name="Список предметов",blank=True)
 
     def __str__(self):
         return self.fio
