@@ -18,6 +18,13 @@ class StudentCreateView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def delete(self, request, pk):
+        try:
+            student = Student.objects.get(pk=pk)
+            student.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Student.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
 
 
